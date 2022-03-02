@@ -8,8 +8,8 @@
 
 | Feature                                                | Progress |
 | :---                                                   | :---:    |
-| Designing a basic messaging protocol                   | `[ ]`    |
-| Implementing a client that supports the whole protocol | `[ ]`    |
+| Designing a basic messaging protocol                   | `[X]`    |
+| Implementing a client that supports the whole protocol | `[*]`    |
 | Implementing a server that supports the whole protocol | `[ ]`    |
 | Add support for multiple channels                      | `[ ]`    |
 | Add authorization for users                            | `[ ]`    |
@@ -30,8 +30,8 @@
 
 | Feature                                              | Progress |
 | :---                                                 | :---:    |
-| Parsing user input                                   | `[ ]`    |
-| Supporting the whole protocol                        | `[ ]`    |
+| Parsing user input                                   | `[X]`    |
+| Supporting the whole protocol                        | `[*]`    |
 | Communicating with connected server                  | `[ ]`    |
 | Outputting messages received from server             | `[ ]`    |
 | Proper TUI                                           | `[ ]`    |
