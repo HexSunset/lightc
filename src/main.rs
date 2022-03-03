@@ -31,16 +31,20 @@ impl Lcommand {
             _ => cmd_split[1..].join(" "),
         };
 
-        let content = &content.as_str()[0..content.len()-1];
-        dbg!(&content);
+        let content = &content.as_str()[0..content.len() - 1];
+        //dbg!(&content);
 
-        Lcommand { cmd_type,user,  content: content.to_string() }
+        Lcommand {
+            cmd_type,
+            user,
+            content: content.to_string(),
+        }
     }
 }
 
 struct Client {
     username: String,
-    tx: Option<mpsc::Sender<Lcommand>>,   // Channel to send messages to connected server
+    tx: Option<mpsc::Sender<Lcommand>>, // Channel to send messages to connected server
     rx: Option<mpsc::Receiver<Lcommand>>, // Channel to receive messages from connected server
 }
 
@@ -51,6 +55,36 @@ impl Client {
             tx: None,
             rx: None,
         }
+    }
+
+    fn send_msg(&mut self, msg: Lcommand) {
+        let mut msg = msg;
+        msg.user = self.username.clone();
+        self.tx.as_ref().unwrap().send(msg).unwrap();
+    }
+
+    fn connect(&mut self, addr: String) {
+        let tx: mpsc::Sender<Lcommand>;
+        let rx: mpsc::Receiver<Lcommand>;
+        let channel = mpsc::channel();
+        tx = channel.0;
+        rx = channel.1;
+        std::thread::spawn(move || {
+            let mut stream = TcpStream::connect(addr).unwrap();
+            let msg = rx.recv().unwrap();
+            let mut out_buf = String::new();
+            match msg.cmd_type {
+                Lcmd::Conn => out_buf.push_str("Conn\n"),
+                Lcmd::Dc => out_buf.push_str("Dc\n"),
+                Lcmd::Say => out_buf.push_str("Say\n"),
+                Lcmd::Whisper => out_buf.push_str("Whisper\n"),
+            }
+            out_buf.push_str(&msg.user);
+            out_buf.push('\n');
+            out_buf.push_str(&msg.content);
+            let _n = stream.write(out_buf.as_bytes()).unwrap();
+        });
+        self.tx = Some(tx);
     }
 }
 
@@ -63,32 +97,8 @@ fn main() {
         let lcmd = Lcommand::new(cmd, client.username.clone());
 
         match lcmd.cmd_type {
-            Lcmd::Conn => client.tx = Some(connect(lcmd.content)),
-            Lcmd::Dc => println!("unimplemented command"),
-            Lcmd::Say => println!("unimplemented command"),
-            Lcmd::Whisper => println!("unimplemented command"),
+            Lcmd::Conn => client.connect(lcmd.content),
+            _ => client.send_msg(lcmd),
         }
     }
-}
-
-fn connect(addr: String) -> mpsc::Sender<Lcommand> {
-    let tx: mpsc::Sender<Lcommand>;
-    let rx: mpsc::Receiver<Lcommand>;
-    let channel = mpsc::channel();
-    tx = channel.0;
-    rx = channel.1;
-    std::thread::spawn(move || {
-        let mut stream = TcpStream::connect(addr).unwrap();
-        let msg = rx.recv().unwrap();
-        let mut out_buf = String::new();
-        match msg.cmd_type {
-            Lcmd::Conn => out_buf.push_str("Conn\n"),
-            Lcmd::Dc => out_buf.push_str("Dc\n"),
-            Lcmd::Say => out_buf.push_str("Say\n"),
-            Lcmd::Whisper => out_buf.push_str("Whisper\n"),
-        }
-        out_buf.push_str(&msg.content);
-        let _n = stream.write(out_buf.as_bytes()).unwrap();
-    });
-    tx
 }
