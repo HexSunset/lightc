@@ -20,24 +20,29 @@ struct Lcommand {
 impl Lcommand {
     fn new(buf: String, user: String) -> Lcommand {
         let cmd_split: Vec<&str> = buf.split(' ').collect();
+        dbg!(cmd_split[0]);
         let cmd_type = match cmd_split[0] {
             "/connect" => Lcmd::Conn,
-            "/disconnect" => Lcmd::Dc,
+            "/disconnect\n" => Lcmd::Dc,
             "/whisper" => Lcmd::Whisper,
             _ => Lcmd::Say,
         };
-        let content = match cmd_type {
+        let mut content = match cmd_type {
             Lcmd::Say => cmd_split.join(" "),
             _ => cmd_split[1..].join(" "),
         };
 
-        let content = &content.as_str()[0..content.len() - 1];
+        if !content.is_empty() {
+            content = content.as_str()[0..content.len() - 1].to_string();
+        }
         //dbg!(&content);
-
+        //dbg!(&cmd_type);
+        //dbg!(&user);
+        //dbg!(&content);
         Lcommand {
             cmd_type,
             user,
-            content: content.to_string(),
+            content,
         }
     }
 }
@@ -77,7 +82,10 @@ impl Client {
                 let mut out_buf = String::new();
                 match msg.cmd_type {
                     Lcmd::Conn => out_buf.push_str("Conn\n"),
-                    Lcmd::Dc => {out_buf.push_str("Dc\n"); end = true},
+                    Lcmd::Dc => {
+                        out_buf.push_str("Dc\n");
+                        end = true
+                    }
                     Lcmd::Say => out_buf.push_str("Say\n"),
                     Lcmd::Whisper => out_buf.push_str("Whisper\n"),
                 }
@@ -89,6 +97,7 @@ impl Client {
                     break;
                 }
             }
+            stream.shutdown(std::net::Shutdown::Both).unwrap();
         });
         self.tx = Some(tx);
     }
