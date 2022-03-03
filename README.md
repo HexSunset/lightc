@@ -30,9 +30,9 @@
 
 | Feature                                              | Progress |
 | :---                                                 | :---:    |
-| Parsing user input                                   | `[X]`    |
-| Supporting the whole protocol                        | `[*]`    |
-| Communicating with connected server                  | `[X]`    |
+| Parsing user input                                   | `[ ]`    |
+| Supporting the whole protocol                        | `[ ]`    |
+| Communicating with connected server                  | `[ ]`    |
 | Outputting messages received from server             | `[ ]`    |
 | Proper TUI                                           | `[ ]`    |
 | Config file support                                  | `[ ]`    |
