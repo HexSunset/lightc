@@ -71,18 +71,24 @@ impl Client {
         rx = channel.1;
         std::thread::spawn(move || {
             let mut stream = TcpStream::connect(addr).unwrap();
-            let msg = rx.recv().unwrap();
-            let mut out_buf = String::new();
-            match msg.cmd_type {
-                Lcmd::Conn => out_buf.push_str("Conn\n"),
-                Lcmd::Dc => out_buf.push_str("Dc\n"),
-                Lcmd::Say => out_buf.push_str("Say\n"),
-                Lcmd::Whisper => out_buf.push_str("Whisper\n"),
+            loop {
+                let mut end = false;
+                let msg = rx.recv().unwrap();
+                let mut out_buf = String::new();
+                match msg.cmd_type {
+                    Lcmd::Conn => out_buf.push_str("Conn\n"),
+                    Lcmd::Dc => {out_buf.push_str("Dc\n"); end = true},
+                    Lcmd::Say => out_buf.push_str("Say\n"),
+                    Lcmd::Whisper => out_buf.push_str("Whisper\n"),
+                }
+                out_buf.push_str(&msg.user);
+                out_buf.push('\n');
+                out_buf.push_str(&msg.content);
+                let _n = stream.write(out_buf.as_bytes()).unwrap();
+                if end {
+                    break;
+                }
             }
-            out_buf.push_str(&msg.user);
-            out_buf.push('\n');
-            out_buf.push_str(&msg.content);
-            let _n = stream.write(out_buf.as_bytes()).unwrap();
         });
         self.tx = Some(tx);
     }
