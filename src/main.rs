@@ -20,7 +20,7 @@ struct Lcommand {
 impl Lcommand {
     fn new(buf: String, user: String) -> Lcommand {
         let cmd_split: Vec<&str> = buf.split(' ').collect();
-        dbg!(cmd_split[0]);
+        //dbg!(cmd_split[0]);
         let cmd_type = match cmd_split[0] {
             "/connect" => Lcmd::Conn,
             "/disconnect\n" => Lcmd::Dc,
