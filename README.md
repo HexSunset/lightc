@@ -32,7 +32,7 @@
 | :---                                                 | :---:    |
 | Parsing user input                                   | `[X]`    |
 | Supporting the whole protocol                        | `[*]`    |
-| Communicating with connected server                  | `[ ]`    |
+| Communicating with connected server                  | `[X]`    |
 | Outputting messages received from server             | `[ ]`    |
 | Proper TUI                                           | `[ ]`    |
 | Config file support                                  | `[ ]`    |
