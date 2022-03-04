@@ -25,6 +25,7 @@
 |`DISCONNECT`|                      | Disconnect from the server                                      |
 |`SAY`       |`<message>`           | Send `<message>` to every user in the server                    |
 |`WHISPER`   |`<message>` `<target>`| Send `<message>` only to user `<target>`                        | 
+|`NICK`      |`<new_username>`      | Change your username to `<new_username>`                        |
 
 ## Client goals
 
