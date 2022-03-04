@@ -31,10 +31,10 @@
 
 | Feature                                              | Progress |
 | :---                                                 | :---:    |
-| Parsing user input                                   | `[ ]`    |
+| Parsing user input                                   | `[X]`    |
 | Supporting the whole protocol                        | `[ ]`    |
 | Communicating with connected server                  | `[ ]`    |
-| Outputting messages received from server             | `[ ]`    |
-| Proper TUI                                           | `[ ]`    |
+| Outputting messages received from server             | `[X]`    |
+| Proper TUI                                           | `[X]`    |
 | Config file support                                  | `[ ]`    |
 | Communicating with multiple channels/servers at once | `[ ]`    |
