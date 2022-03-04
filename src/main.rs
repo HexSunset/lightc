@@ -1,24 +1,27 @@
 use crossterm::queue;
-use crossterm::terminal::enable_raw_mode;
+use crossterm::terminal::{enable_raw_mode, disable_raw_mode};
 use crossterm::{
     cursor,
+    event::{read, Event, KeyCode, KeyEvent},
     style::Print,
     terminal::{self, Clear, ClearType},
 };
 use std::io::{stdout, Read, Write};
 use std::net::TcpStream;
 use std::sync::mpsc;
+use std::thread;
 use std::time::Duration;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 enum Lcmd {
     Conn,
     Dc,
     Say,
-    Whisper,
+    Nick,
+    Quit,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Lcommand {
     cmd_type: Lcmd,
     user: String,
@@ -27,13 +30,13 @@ struct Lcommand {
 
 impl Lcommand {
     // Construct command from user input
+    /*
     fn new(buf: String, user: String) -> Lcommand {
         let cmd_split: Vec<&str> = buf.split(' ').collect();
         //dbg!(cmd_split[0]);
         let cmd_type = match cmd_split[0] {
             "/connect" => Lcmd::Conn,
             "/disconnect\n" => Lcmd::Dc,
-            "/whisper" => Lcmd::Whisper,
             _ => Lcmd::Say,
         };
         let mut content = match cmd_type {
@@ -54,16 +57,34 @@ impl Lcommand {
             content,
         }
     }
+    */
 
-    fn display(self) -> String {
+    fn display(self, from_client: bool) -> String {
         let mut output = String::new();
-        match self.cmd_type {
-            Lcmd::Say => output.push_str(format!("<{}>: {}", self.user, self.content).as_str()),
-            Lcmd::Whisper => output.push_str(format!("({}): {}", self.user, self.content).as_str()),
-            Lcmd::Conn => output.push_str(format!("[SERVER]: {} joined", self.user).as_str()),
-            Lcmd::Dc => output.push_str(format!("[SERVER]: {} left", self.user).as_str()),
+        if !from_client {
+            match self.cmd_type {
+                Lcmd::Say => output.push_str(format!("<{}>: {}", self.user, self.content).as_str()),
+                Lcmd::Conn => output.push_str(format!("[SERVER]: {} joined", self.user).as_str()),
+                Lcmd::Dc => output.push_str(format!("[SERVER]: {} left", self.user).as_str()),
+                Lcmd::Nick => output.push_str(
+                    format!(
+                        "[SERVER]: {} changed their nickname to {}",
+                        self.user, self.content
+                    )
+                    .as_str(),
+                ),
+                _ => (),
+            }
+            output
+        } else {
+            match self.cmd_type {
+                Lcmd::Say => output.push_str(format!("<{}>: {}", self.user, self.content).as_str()),
+                Lcmd::Conn => output.push_str("[CLIENT]: you joined"),
+                Lcmd::Dc => output.push_str("[CLIENT]: you left"),
+                _ => (),
+            }
+            output
         }
-        output
     }
 
     fn from(buf: String) -> Lcommand {
@@ -75,13 +96,11 @@ impl Lcommand {
             "SAY" => Lcmd::Say,
             "CONNECT" => Lcmd::Conn,
             "DISCONNECT" => Lcmd::Dc,
-            "WHISPER" => Lcmd::Whisper,
-            _ => panic!("fucky wucky happened"),
+            _ => panic!("should not be reachable"),
         };
         let user = String::from(cmd_split[1]);
         let content = match cmd_type {
             Lcmd::Say => String::from(cmd_split[2]),
-            Lcmd::Whisper => String::from(cmd_split[2]),
             _ => String::new(),
         };
 
@@ -95,25 +114,77 @@ impl Lcommand {
 
 struct Client {
     username: String,
+    connected: Option<String>,
     tx: Option<mpsc::Sender<Lcommand>>, // Channel to send messages to connected server
     rx: Option<mpsc::Receiver<Lcommand>>, // Channel to receive messages from connected server
     messages: Vec<String>,
+    user_in: mpsc::Receiver<char>,
 }
 
 impl Client {
     fn new(user: String) -> Client {
+        let user_tx: mpsc::Sender<char>;
+        let user_in: mpsc::Receiver<char>;
+        let channel = mpsc::channel();
+        user_tx = channel.0;
+        user_in = channel.1;
+
+        // User input monitor thread
+        thread::spawn(move || loop {
+            let k = read().unwrap();
+            match k {
+                // entered random character
+                Event::Key(KeyEvent {
+                    code: KeyCode::Char(c),
+                    modifiers: _m,
+                }) => user_tx.send(c).unwrap(),
+
+                // backspace
+                Event::Key(KeyEvent {
+                    code: KeyCode::Backspace,
+                    modifiers: _m,
+                }) => user_tx.send(0x8 as char).unwrap(), // Backspace ascii Pog
+
+                Event::Key(KeyEvent {
+                    code: KeyCode::Enter,
+                    modifiers: _m,
+                }) => user_tx.send(0xA as char).unwrap(), // Newline ascii Pog
+
+                _ => (), // Ignore other events
+            }
+        });
+
         Client {
             username: user,
+            connected: None,
             tx: None,
             rx: None,
             messages: vec![],
+            user_in,
         }
     }
 
-    fn send_msg(&mut self, msg: Lcommand) {
+    // returns true if connected to a server, false if not
+    fn send_msg(&mut self, msg: Lcommand) -> bool {
         let mut msg = msg;
-        msg.user = self.username.clone();
-        self.tx.as_ref().unwrap().send(msg).unwrap();
+        if msg.cmd_type == Lcmd::Nick {
+        } else {
+            msg.user = self.username.clone();
+        } 
+        if msg.cmd_type == Lcmd::Dc {
+            self.connected = None;
+        }
+        //self.tx.as_ref().unwrap().send(msg).unwrap();
+        if self.tx.is_some() {
+            let tx = self.tx.as_ref().unwrap();
+            let ret = tx.send(msg);
+            if ret.is_err() {
+                return false;
+            }
+            true
+        } else {
+            false
+        }
     }
 
     fn connect(&mut self, addr: String) {
@@ -122,7 +193,14 @@ impl Client {
         let channel = mpsc::channel();
         tx = channel.0;
         out_rx = channel.1;
-        let mut out_stream = TcpStream::connect(addr).unwrap();
+        let out_stream = TcpStream::connect(addr.clone());
+        if out_stream.is_err() {
+            self.messages.push(format!("[CLIENT]: failed to join {}", addr));
+            return
+        }
+        let mut out_stream = out_stream.unwrap();
+        self.messages.push(format!("[CLIENT]: you joined {}", &addr));
+        self.connected = Some(addr);
         let mut rec_stream = out_stream.try_clone().unwrap();
 
         // Output thread
@@ -138,11 +216,13 @@ impl Client {
                         end = true // Stop handling the stream when Dc is passed
                     }
                     Lcmd::Say => out_buf.push_str("SAY\n"),
-                    Lcmd::Whisper => out_buf.push_str("WHISPER\n"),
+                    Lcmd::Nick => out_buf.push_str("NICK\n"),
+                    _ => (),
                 }
                 out_buf.push_str(&msg.user);
                 out_buf.push('\n');
                 out_buf.push_str(&msg.content);
+                out_buf.push('\n');
                 let _n = out_stream.write(out_buf.as_bytes()).unwrap();
                 if end {
                     break;
@@ -159,10 +239,14 @@ impl Client {
         // Receiver thread
         std::thread::spawn(move || {
             let mut msgbuf: Vec<u8> = vec![0; 1024];
-            in_tx.send(Lcommand::new(String::from("/connect"), String::from("you"))).unwrap();
             loop {
-                let _n = rec_stream.read(&mut msgbuf).unwrap();
-                in_tx.send(Lcommand::from(String::from_utf8(msgbuf.clone()).unwrap())).unwrap();
+                let n = rec_stream.read(&mut msgbuf);
+                if n.is_err() {
+                    break;
+                }
+                in_tx
+                    .send(Lcommand::from(String::from_utf8(msgbuf.clone()).unwrap()))
+                    .unwrap();
             }
         });
         self.tx = Some(tx);
@@ -187,38 +271,94 @@ impl Client {
             }
         }
     }
+
+    fn print_prompt(&self, mut out: &std::io::Stdout, text: String) {
+        let status: String;
+        if self.connected.is_some() {
+            status = format!("[{}]", self.connected.as_ref().unwrap());
+        } else {
+            status = String::from("[]");
+        }
+        queue!(
+            out,
+            cursor::MoveTo(0, terminal::size().unwrap().1),
+            Print(format!("{}: {}", status, text)),
+        )
+        .unwrap();
+    }
+
+    fn print_welcome(&mut self) {
+        self.messages.push("Hi! Welcome to LightC! :)".to_string());
+        self.messages.push("Set your nickname with '/nick ...'".to_string());
+        self.messages.push("Connect to a server with '/connect ...'".to_string());
+    }
 }
 
 fn main() {
     let mut client = Client::new(String::from("test_user"));
-    client.connect(String::from("127.0.0.1:6969"));
+    //client.connect(String::from("127.0.0.1:6969"));
+    let mut prompt_text = String::new();
     let mut stdout = stdout();
     enable_raw_mode().unwrap();
     crossterm::queue!(stdout, crossterm::terminal::Clear(ClearType::All)).unwrap();
+    
+    client.print_welcome();
 
     loop {
         // Get new received messages
         if client.rx.is_some() {
             let new_msg = client.rx.as_ref().unwrap().try_recv();
             if let Ok(new_msg) = new_msg {
-                client.messages.push(new_msg.display());
+                client.messages.push(new_msg.display(false));
             }
         }
 
         clear_screen(&stdout);
 
         client.display_messages(&stdout);
+
+        let mut cmd: Option<Lcommand> = None;
+
+        let received_char = client.user_in.try_recv();
+        if let Ok(character) = received_char {
+            if character == 0xA as char {
+                // newline
+                cmd = Some(parse_cmd(prompt_text.clone(), &mut client));
+                prompt_text.clear();
+            } else if character == 0x8 as char {
+                // backspace
+                prompt_text.pop();
+            } else {
+                prompt_text.push(character);
+            }
+        }
+        client.print_prompt(&stdout, prompt_text.clone());
+        // Send command
+        if let Some(command) = cmd {
+            if command.cmd_type == Lcmd::Quit {
+                break;
+            }
+            else if command.cmd_type == Lcmd::Conn {
+                client.connect(command.content);
+            } else {
+                let success = client.send_msg(command.clone());
+                if success {
+                    client.messages.push(command.clone().display(true));
+                } else {
+                    client.connected = None;
+                    client.messages.push("[CLIENT]: not connected to a server".to_string());
+                }
+            }
+        }
+
         
-        queue!(
-            stdout,
-            cursor::MoveTo(0, terminal::size().unwrap().1),
-            Print("[MSG]: "),
-        )
-        .unwrap();
-        
+
         stdout.flush().unwrap();
-        std::thread::sleep(Duration::from_millis(1000));
+        std::thread::sleep(Duration::from_millis(11));
     }
+
+    // Make terminal normal again
+    disable_raw_mode().unwrap();
 }
 
 fn clear_screen(mut out: &std::io::Stdout) {
@@ -226,8 +366,39 @@ fn clear_screen(mut out: &std::io::Stdout) {
     queue!(
         out,
         cursor::MoveTo(0, 0),
-        cursor::Hide,
         Clear(ClearType::All)
     )
     .unwrap();
+}
+
+fn parse_cmd(buf: String, client: &mut Client) -> Lcommand {
+    let cmd_split: Vec<&str> = buf.split(' ').collect();
+    //dbg!(cmd_split[0]);
+    let cmd_type = match cmd_split[0] {
+        "/connect" => Lcmd::Conn,
+        "/disconnect" => Lcmd::Dc,
+        "/nick" => Lcmd::Nick,
+        "/quit" => Lcmd::Quit,
+        _ => Lcmd::Say,
+    };
+    let content = match cmd_type {
+        Lcmd::Say => cmd_split.join(" "),
+        _ => cmd_split[1..].join(" "),
+    };
+
+    if cmd_type == Lcmd::Nick {
+        let old_username = client.username.clone();
+        client.username = content.clone();
+        client.messages.push(format!("[CLIENT]: you changed your nickname to {}", client.username.clone()));
+        return Lcommand {
+            cmd_type,
+            user: old_username,
+            content,
+        };
+    }
+    Lcommand {
+        cmd_type,
+        user: client.username.clone(),
+        content,
+    }
 }
