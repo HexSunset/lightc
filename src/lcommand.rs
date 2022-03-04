@@ -51,11 +51,13 @@ impl Lcommand {
             "SAY" => Lcmd::Say,
             "CONNECT" => Lcmd::Conn,
             "DISCONNECT" => Lcmd::Dc,
+            "NICK" => Lcmd::Nick,
             _ => panic!("should not be reachable"),
         };
         let user = String::from(cmd_split[1]);
         let content = match cmd_type {
             Lcmd::Say => String::from(cmd_split[2]),
+            Lcmd::Nick => String::from(cmd_split[2]),
             _ => String::new(),
         };
 
@@ -66,5 +68,3 @@ impl Lcommand {
         }
     }
 }
-
-

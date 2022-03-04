@@ -1,9 +1,9 @@
 use crossterm::{
     cursor,
     event::{read, Event, KeyCode, KeyEvent},
-    terminal,
-    style::Print,
     queue,
+    style::Print,
+    terminal,
 };
 use std::io::{Read, Write};
 use std::net::TcpStream;
@@ -70,7 +70,7 @@ impl Client {
         if msg.cmd_type == Lcmd::Nick {
         } else {
             msg.user = self.username.clone();
-        } 
+        }
         if msg.cmd_type == Lcmd::Dc {
             self.connected = None;
         }
@@ -95,11 +95,13 @@ impl Client {
         out_rx = channel.1;
         let out_stream = TcpStream::connect(addr.clone());
         if out_stream.is_err() {
-            self.messages.push(format!("[CLIENT]: failed to join {}", addr));
-            return
+            self.messages
+                .push(format!("[CLIENT]: failed to join {}", addr));
+            return;
         }
         let mut out_stream = out_stream.unwrap();
-        self.messages.push(format!("[CLIENT]: you joined {}", &addr));
+        self.messages
+            .push(format!("[CLIENT]: you joined {}", &addr));
         self.connected = Some(addr);
         let mut rec_stream = out_stream.try_clone().unwrap();
 
@@ -117,7 +119,10 @@ impl Client {
                     }
                     Lcmd::Say => out_buf.push_str("SAY\n"),
                     Lcmd::Nick => out_buf.push_str("NICK\n"),
-                    _ => (),
+                    Lcmd::Quit => {
+                        out_buf.push_str("DISCONNECT\n");
+                        end = true // Stop handling the stream when Quit is passed
+                    }
                 }
                 out_buf.push_str(&msg.user);
                 out_buf.push('\n');
@@ -149,8 +154,14 @@ impl Client {
                     .unwrap();
             }
         });
-        self.tx = Some(tx);
-        self.rx = Some(rx)
+        self.tx = Some(tx.clone());
+        self.rx = Some(rx);
+        tx.send(Lcommand {
+            cmd_type: Lcmd::Conn,
+            user: self.username.clone(),
+            content: String::new(),
+        })
+        .unwrap();
     }
 
     pub fn display_messages(&self, mut out: &std::io::Stdout) {
@@ -189,7 +200,9 @@ impl Client {
 
     pub fn print_welcome(&mut self) {
         self.messages.push("Hi! Welcome to LightC! :)".to_string());
-        self.messages.push("Set your nickname with '/nick ...'".to_string());
-        self.messages.push("Connect to a server with '/connect ...'".to_string());
+        self.messages
+            .push("Set your nickname with '/nick ...'".to_string());
+        self.messages
+            .push("Connect to a server with '/connect ...'".to_string());
     }
 }
