@@ -186,9 +186,9 @@ impl Client {
     pub fn print_prompt(&self, mut out: &std::io::Stdout, text: String) {
         let status: String;
         if self.connected.is_some() {
-            status = format!("[{}]", self.connected.as_ref().unwrap());
+            status = format!("[{}@{}]", &self.username, self.connected.as_ref().unwrap());
         } else {
-            status = String::from("[]");
+            status = format!("[{}@none]", &self.username);
         }
         queue!(
             out,
