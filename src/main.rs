@@ -6,7 +6,7 @@ use crossterm::{
 };
 use std::env;
 use std::io::{stdout, Read, Write};
-use std::net::{TcpStream, TcpListener};
+use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
@@ -21,7 +21,7 @@ fn main() {
     if args.len() > 2 && args.get(1) == Some(&"server".to_string()) {
         // Run in server mode
         let listener = TcpListener::bind(args.get(2).unwrap()).unwrap();
-        println!("Listening on 127.0.0.1:6969");
+        println!("Listening on {}", args.get(2).unwrap());
 
         let users: Arc<Mutex<Vec<TcpStream>>> = Arc::new(Mutex::new(vec![]));
         for stream in listener.incoming() {
@@ -56,7 +56,7 @@ fn main() {
                         }
                     }
                     if end {
-                        break
+                        break;
                     }
                     std::thread::sleep(Duration::from_millis(10));
                 }
