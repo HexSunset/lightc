@@ -18,9 +18,9 @@ use lightc::{
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    if args.len() > 1 && args.get(1) == Some(&"server".to_string()) {
+    if args.len() > 2 && args.get(1) == Some(&"server".to_string()) {
         // Run in server mode
-        let listener = TcpListener::bind("127.0.0.1:6969").unwrap();
+        let listener = TcpListener::bind(args.get(2).unwrap()).unwrap();
         println!("Listening on 127.0.0.1:6969");
 
         let users: Arc<Mutex<Vec<TcpStream>>> = Arc::new(Mutex::new(vec![]));
