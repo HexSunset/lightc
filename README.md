@@ -9,8 +9,8 @@
 | Feature                                                | Progress |
 | :---                                                   | :---:    |
 | Designing a basic messaging protocol                   | `[X]`    |
-| Implementing a client that supports the whole protocol | `[*]`    |
-| Implementing a server that supports the whole protocol | `[ ]`    |
+| Implementing a client that supports the whole protocol | `[X]`    |
+| Implementing a server that supports the whole protocol | `[X]`    |
 | Add support for multiple channels                      | `[ ]`    |
 | Add authorization for users                            | `[ ]`    |
 | Add moderation features                                | `[ ]`    |
@@ -24,7 +24,6 @@
 |`CONNECT`   |`<username>`          | Connect to the server as `<username>`                           |
 |`DISCONNECT`|                      | Disconnect from the server                                      |
 |`SAY`       |`<message>`           | Send `<message>` to every user in the server                    |
-|`WHISPER`   |`<message>` `<target>`| Send `<message>` only to user `<target>`                        | 
 |`NICK`      |`<new_username>`      | Change your username to `<new_username>`                        |
 
 ## Client goals
@@ -32,8 +31,8 @@
 | Feature                                              | Progress |
 | :---                                                 | :---:    |
 | Parsing user input                                   | `[X]`    |
-| Supporting the whole protocol                        | `[ ]`    |
-| Communicating with connected server                  | `[ ]`    |
+| Supporting the whole protocol                        | `[X]`    |
+| Communicating with connected server                  | `[X]`    |
 | Outputting messages received from server             | `[X]`    |
 | Proper TUI                                           | `[X]`    |
 | Config file support                                  | `[ ]`    |
