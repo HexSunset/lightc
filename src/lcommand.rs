@@ -5,6 +5,7 @@ pub enum Lcmd {
     Say,
     Nick,
     Quit,
+    Help,
 }
 
 #[derive(Debug, Clone)]

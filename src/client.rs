@@ -123,6 +123,9 @@ impl Client {
                         out_buf.push_str("DISCONNECT\n");
                         end = true // Stop handling the stream when Quit is passed
                     }
+                    _ => {
+                        break;
+                    }
                 }
                 out_buf.push_str(&msg.user);
                 out_buf.push('\n');
@@ -201,8 +204,19 @@ impl Client {
     pub fn print_welcome(&mut self) {
         self.messages.push("Hi! Welcome to LightC! :)".to_string());
         self.messages
-            .push("Set your nickname with '/nick ...'".to_string());
+            .push("Use '/help' to see all available commands".to_string());
+    }
+
+    pub fn print_help(&mut self) {
+        self.messages.push("Commands: ".to_string());
         self.messages
-            .push("Connect to a server with '/connect ...'".to_string());
+            .push("\t/connect <addr> : connect to server at <addr>".to_string());
+        self.messages
+            .push("\t/disconnect : disconnect from connected server".to_string());
+        self.messages
+            .push("\t/nick <nick> : change your username to <nick>".to_string());
+        self.messages.push(
+            "\t/quit : disconnect from the connected server and close the client".to_string(),
+        );
     }
 }

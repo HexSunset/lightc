@@ -36,11 +36,13 @@ fn clear_screen(mut out: &std::io::Stdout) {
 fn parse_cmd(buf: String, client: &mut Client) -> Lcommand {
     let cmd_split: Vec<&str> = buf.split(' ').collect();
     //dbg!(cmd_split[0]);
+    // handle /help separately
     let cmd_type = match cmd_split[0] {
         "/connect" => Lcmd::Conn,
         "/disconnect" => Lcmd::Dc,
         "/nick" => Lcmd::Nick,
         "/quit" => Lcmd::Quit,
+        "/help" => Lcmd::Help,
         _ => Lcmd::Say,
     };
     let content = match cmd_type {
@@ -159,6 +161,8 @@ fn run_client() {
                 break;
             } else if command.cmd_type == Lcmd::Conn {
                 client.connect(command.content);
+            } else if command.cmd_type == Lcmd::Conn {
+                client.print_help();
             } else {
                 let success = client.send_msg(command.clone());
                 if success {
