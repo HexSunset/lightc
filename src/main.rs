@@ -161,7 +161,7 @@ fn run_client() {
                 break;
             } else if command.cmd_type == Lcmd::Conn {
                 client.connect(command.content);
-            } else if command.cmd_type == Lcmd::Conn {
+            } else if command.cmd_type == Lcmd::Help {
                 client.print_help();
             } else {
                 let success = client.send_msg(command.clone());
