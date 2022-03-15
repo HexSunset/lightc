@@ -29,3 +29,13 @@
 - [X] Proper TUI                                          
 - [ ] Config file support                                 
 - [ ] Communicating with multiple channels/servers at once
+
+## Server goals
+- [ ] Receiving messages from user
+- [ ] Managing multiple connected users
+- [ ] Broadcasting messages to all connected users
+- [ ] Sending status messages to users
+- [ ] Sending custom info to users when they connect
+- [ ] Supporting multiple channels
+- [ ] Supporting user authentication
+- [ ] Supporting moderator users
