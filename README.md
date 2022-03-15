@@ -6,7 +6,7 @@
 
 - [X] Designing a basic messaging protocol 
 - [X] Implementing a client that supports the whole protocol 
-- [X] mplementing a server that supports the whole protocol 
+- [X] Implementing a server that supports the whole protocol 
 - [ ] Add support for multiple channels                      
 - [ ] Add authorization for users                            
 - [ ] Add moderation features                                
