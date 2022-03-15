@@ -4,14 +4,12 @@
 
 ## Project goals
 
-| Feature                                                | Progress |
-| :---                                                   | :---:    |
-| Designing a basic messaging protocol                   | `[X]`    |
-| Implementing a client that supports the whole protocol | `[X]`    |
-| Implementing a server that supports the whole protocol | `[X]`    |
-| Add support for multiple channels                      | `[ ]`    |
-| Add authorization for users                            | `[ ]`    |
-| Add moderation features                                | `[ ]`    |
+- [X] Designing a basic messaging protocol 
+- [X] Implementing a client that supports the whole protocol 
+- [X] mplementing a server that supports the whole protocol 
+- [ ] Add support for multiple channels                      
+- [ ] Add authorization for users                            
+- [ ] Add moderation features                                
 
 ## Protocol specification
 
@@ -24,12 +22,10 @@
 
 ## Client goals
 
-| Feature                                              | Progress |
-| :---                                                 | :---:    |
-| Parsing user input                                   | `[X]`    |
-| Supporting the whole protocol                        | `[X]`    |
-| Communicating with connected server                  | `[X]`    |
-| Outputting messages received from server             | `[X]`    |
-| Proper TUI                                           | `[X]`    |
-| Config file support                                  | `[ ]`    |
-| Communicating with multiple channels/servers at once | `[ ]`    |
+- [X] Parsing user input                                  
+- [X] Supporting the whole protocol                       
+- [X] Communicating with connected server                 
+- [X] Outputting messages received from server            
+- [X] Proper TUI                                          
+- [ ] Config file support                                 
+- [ ] Communicating with multiple channels/servers at once
