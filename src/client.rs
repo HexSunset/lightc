@@ -9,6 +9,7 @@ use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::sync::mpsc;
 use std::thread;
+use std::env;
 
 use super::lcommand::{Lcmd, Lcommand};
 
@@ -21,13 +22,11 @@ pub struct Client {
     pub user_in: mpsc::Receiver<char>,
 }
 
-impl Client {
-    pub fn new(user: String) -> Client {
-        let user_tx: mpsc::Sender<char>;
-        let user_in: mpsc::Receiver<char>;
+impl Default for Client {
+    fn default() -> Client {
         let channel = mpsc::channel();
-        user_tx = channel.0;
-        user_in = channel.1;
+        let user_tx: mpsc::Sender<char> = channel.0;
+        let user_in: mpsc::Receiver<char> = channel.1;
 
         // User input monitor thread
         thread::spawn(move || loop {
@@ -53,6 +52,8 @@ impl Client {
                 _ => (), // Ignore other events
             }
         });
+        
+        let user = env::var("USER").unwrap();
 
         Client {
             username: user,
@@ -63,7 +64,9 @@ impl Client {
             user_in,
         }
     }
+}
 
+impl Client {
     // returns true if connected to a server, false if not
     pub fn send_msg(&mut self, msg: Lcommand) -> bool {
         let mut msg = msg;
@@ -88,11 +91,9 @@ impl Client {
     }
 
     pub fn connect(&mut self, addr: String) {
-        let tx: mpsc::Sender<Lcommand>;
-        let out_rx: mpsc::Receiver<Lcommand>;
         let channel = mpsc::channel();
-        tx = channel.0;
-        out_rx = channel.1;
+        let tx: mpsc::Sender<Lcommand> = channel.0;
+        let out_rx: mpsc::Receiver<Lcommand> = channel.1;
         let out_stream = TcpStream::connect(addr.clone());
         if out_stream.is_err() {
             self.messages
@@ -139,11 +140,9 @@ impl Client {
             out_stream.shutdown(std::net::Shutdown::Both).unwrap();
         });
 
-        let rx: mpsc::Receiver<Lcommand>;
-        let in_tx: mpsc::Sender<Lcommand>;
         let channel = mpsc::channel();
-        in_tx = channel.0;
-        rx = channel.1;
+        let in_tx: mpsc::Sender<Lcommand> = channel.0;
+        let rx: mpsc::Receiver<Lcommand> = channel.1;
         // Receiver thread
         std::thread::spawn(move || {
             let mut msgbuf: Vec<u8> = vec![0; 1024];

@@ -116,7 +116,7 @@ fn run_server(addr: String) {
 }
 
 fn run_client() {
-    let mut client = Client::new(String::from("test_user"));
+    let mut client = Client::default();
     //client.connect(String::from("127.0.0.1:6969"));
     let mut prompt_text = String::new();
     let mut stdout = stdout();
