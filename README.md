@@ -35,6 +35,7 @@
 - [X] Managing multiple connected users
 - [X] Broadcasting messages to all connected users
 - [X] Sending status messages to users
+- [ ] Config file support
 - [ ] Sending custom info to users when they connect
 - [ ] Supporting multiple channels
 - [ ] Supporting user authentication
