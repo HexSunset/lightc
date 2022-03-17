@@ -2,6 +2,14 @@
 
 **Light** **C**hat is a tiny server-client messaging protocol designed as part of a school project. Written entirely in Rust.
 
+## Usage
+
+### Client
+Run the `lc` binary to use the client.
+
+### Server
+Run the `lcserver <address>` in the terminal to start a server that's listening on `<address>`.
+
 ## Project goals
 
 - [X] Designing a basic messaging protocol 
