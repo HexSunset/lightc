@@ -8,7 +8,7 @@
 Run the `lc` binary to use the client.
 
 ### Server
-Run the `lcserver <address>` in the terminal to start a server that's listening on `<address>`.
+Run `lcserver <address>` in the terminal to start a server that's listening on `<address>`.
 
 ## Project goals
 
