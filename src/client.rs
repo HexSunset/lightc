@@ -5,11 +5,11 @@ use crossterm::{
     style::Print,
     terminal,
 };
+use std::env;
 use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::sync::mpsc;
 use std::thread;
-use std::env;
 
 use super::lcommand::{Lcmd, Lcommand};
 
@@ -52,7 +52,7 @@ impl Default for Client {
                 _ => (), // Ignore other events
             }
         });
-        
+
         let user = env::var("USER").unwrap();
 
         Client {
@@ -164,6 +164,43 @@ impl Client {
             content: String::new(),
         })
         .unwrap();
+    }
+
+    pub fn parse_cmd(&mut self, buf: String) -> Lcommand {
+        let cmd_split: Vec<&str> = buf.split(' ').collect();
+        //dbg!(cmd_split[0]);
+        // handle /help separately
+        let cmd_type = match cmd_split[0] {
+            "/connect" => Lcmd::Conn,
+            "/disconnect" => Lcmd::Dc,
+            "/nick" => Lcmd::Nick,
+            "/quit" => Lcmd::Quit,
+            "/help" => Lcmd::Help,
+            _ => Lcmd::Say,
+        };
+        let content = match cmd_type {
+            Lcmd::Say => cmd_split.join(" "),
+            _ => cmd_split[1..].join(" "),
+        };
+
+        if cmd_type == Lcmd::Nick {
+            let old_username = self.username.clone();
+            self.username = content.clone();
+            self.messages.push(format!(
+                "[self]: you changed your nickname to {}",
+                self.username.clone()
+            ));
+            return Lcommand {
+                cmd_type,
+                user: old_username,
+                content,
+            };
+        }
+        Lcommand {
+            cmd_type,
+            user: self.username.clone(),
+            content,
+        }
     }
 
     pub fn display_messages(&self, mut out: &std::io::Stdout) {
