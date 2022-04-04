@@ -8,7 +8,9 @@
 Run the `lc` binary to use the client.
 
 ### Server
-Run `lcserver <address>` in the terminal to start a server that's listening on `<address>`. Will bind to `127.0.0.1:1234` by default
+Run `lcserver <address>` in the terminal to start a server that's listening on `<address>`.
+
+Will bind to `127.0.0.1:1234` by default.
 
 ## Project goals
 
