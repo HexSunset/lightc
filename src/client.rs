@@ -5,7 +5,6 @@ use crossterm::{
     style::Print,
     terminal,
 };
-use std::env;
 use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::sync::mpsc;
@@ -53,7 +52,7 @@ impl Default for Client {
             }
         });
 
-        let user = env::var("USER").unwrap();
+        let user = String::from("user");
 
         Client {
             username: user,
@@ -187,7 +186,7 @@ impl Client {
             let old_username = self.username.clone();
             self.username = content.clone();
             self.messages.push(format!(
-                "[self]: you changed your nickname to {}",
+                "[CLIENT]: you changed your nickname to {}",
                 self.username.clone()
             ));
             return Lcommand {

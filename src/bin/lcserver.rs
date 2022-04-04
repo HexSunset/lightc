@@ -8,12 +8,14 @@ use lightc::lcommand::{Lcmd, Lcommand};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-
+    let addr: String;
     if args.len() == 2 {
         // Run in server mode
-        let addr: String = args.get(1).unwrap().to_string();
-        run_server(addr);
+        addr = args.get(1).unwrap().to_string();
+    } else {
+        addr = String::from("127.0.0.1:1234");
     }
+    run_server(addr);
 }
 
 fn run_server(addr: String) {
